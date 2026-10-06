@@ -53,5 +53,8 @@ git status --ignored
 git diff --cached --name-only
 ```
 
-Choose and add a license before creating a public repository. No license is
-included here because licensing must be decided by the project owner.
+## License
+
+Apache-2.0. The license applies to this repository's source code and
+documentation only; it does not grant access to clinical datasets, linkage
+tables, controlled documentation, trademarks, or deployment credentials.
