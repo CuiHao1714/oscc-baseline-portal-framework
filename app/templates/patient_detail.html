@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}患者记录 · XJTU-OSCC{% endblock %}
+{% block content %}
+{% set sex_display = {'man': '男', 'women': '女'}.get(patient.sex, patient.sex) %}
+{% set pni = patient.record_data.get('pni_1_primsugr') %}{% set margin = patient.record_data.get('margins_status_1_primsugr') %}
+{% set pni_display = {'positive': '阳性', 'negative': '阴性'}.get(pni, pni) %}{% set margin_display = {'positive': '阳性', 'negative': '阴性'}.get(margin, margin) %}
+{% set surgery_display = {'yes': '已实施', 'no': '未实施'}.get(patient.record_data.get('used_primarysurgery_1_primsugr'), patient.record_data.get('used_primarysurgery_1_primsugr')) %}
+{% set neck_display = {'yes': '已实施', 'no': '未实施'}.get(patient.record_data.get('used_neckdissection_1_primsugr'), patient.record_data.get('used_neckdissection_1_primsugr')) %}
+<div class="patient-detail-page">
+<nav class="breadcrumb" aria-label="路径导航"><a href="/patients">患者队列</a><span>/</span><span>{% if patient.record_data.get('nrm') %}NRM {{ patient.record_data.get('nrm') }}{% else %}患者记录{% endif %}</span></nav>
+
+<header class="patient-identity-header">
+  <div>
+    <p class="eyebrow">患者记录</p>
+    <h1>{% if patient.record_data.get('nrm') %}NRM {{ patient.record_data.get('nrm') }}{% else %}患者记录{% endif %}</h1>
+    <p class="diagnosis-subtitle">{{ patient.record_data.get('histologic_type_1_primsugr') or '组织学诊断未记录' }}</p>
+    <p class="patient-metadata">{{ sex_display or '性别未记录' }}{% if patient.age_at_diagnosis is not none %} · {{ patient.age_at_diagnosis }} 岁{% endif %}{% if patient.diagnosis_date %} · 诊断于 {{ patient.diagnosis_date }}{% endif %}</p>
+  </div>
+  {% if user.role in ['editor','admin'] %}<a class="button" href="/patients/{{patient.subject_id}}/edit">编辑记录</a>{% endif %}
+</header>
+
+{% if patient.ajcc_stage or patient.record_data.get('pt') or patient.record_data.get('pn') or pni is not none or margin is not none %}
+<section class="clinical-decision-strip" aria-label="关键临床判断">
+  {% if patient.ajcc_stage %}<div><span>AJCC 分期</span><strong>{{ patient.ajcc_stage }}</strong></div>{% endif %}
+  {% if patient.record_data.get('pt') or patient.record_data.get('pn') %}<div><span>病理 TNM</span><strong>{{ patient.record_data.get('pt') or 'pT—' }} · {{ patient.record_data.get('pn') or 'pN—' }}</strong></div>{% endif %}
+  {% if pni is not none %}<div class="{% if pni == 'positive' %}risk-fact{% endif %}"><span>神经周围侵犯</span><strong>{{ pni_display }}</strong></div>{% endif %}
+  {% if margin is not none %}<div><span>切缘状态</span><strong>{{ margin_display }}</strong></div>{% endif %}
+</section>
+{% endif %}
+
+<div class="record-navigation">
+  <nav class="patient-tabs" aria-label="患者记录导航"><button type="button" class="patient-tab" data-tab="overview">概览</button><button type="button" class="patient-tab" data-tab="clinical">临床信息</button><button type="button" class="patient-tab" data-tab="pathology">病理</button><button type="button" class="patient-tab" data-tab="treatment">手术与治疗</button><button type="button" class="patient-tab" data-tab="followup">随访</button></nav>
+  <label class="technical-toggle"><input id="technical-fields-toggle" type="checkbox"> 显示技术字段名</label>
+</div>
+
+<section class="tab-panel overview-panel" data-panel="overview">
+  <div class="overview-layout">
+    <div class="overview-primary">
+      <article class="overview-section"><h2>诊断与分期</h2><dl class="summary-list"><div><dt>诊断日期</dt><dd>{{ patient.diagnosis_date or '—' }}</dd></div><div><dt>原发部位</dt><dd>{{ patient.primary_site or '—' }}</dd></div><div><dt>临床 TNM</dt><dd>{{ patient.record_data.get('ct') or '—' }} · {{ patient.record_data.get('cn') or '—' }} · {{ patient.record_data.get('cm') or '—' }}</dd></div><div><dt>AJCC 分期</dt><dd>{{ patient.ajcc_stage or '—' }}</dd></div></dl></article>
+      <article class="overview-section treatment-path"><h2>诊疗路径</h2><dl class="summary-list"><div><dt>新辅助治疗</dt><dd>{{ patient.record_data.get('tx_class_1_neoadj') or '—' }}</dd></div><div><dt>初始手术</dt><dd>{{ surgery_display or '—' }}</dd></div><div><dt>颈部清扫</dt><dd>{{ neck_display or '—' }}</dd></div><div><dt>辅助治疗</dt><dd>{{ patient.record_data.get('tx_class_1_adj') or '—' }}</dd></div></dl></article>
+    </div>
+    <aside class="overview-secondary"><article class="overview-section pathology-focus"><h2>病理关键发现</h2><dl class="summary-list"><div><dt>组织学类型</dt><dd>{{ patient.record_data.get('histologic_type_1_primsugr') or '—' }}</dd></div><div><dt>分化程度</dt><dd>{{ patient.record_data.get('histologic_grade_1_primsugr') or '—' }}</dd></div><div><dt>神经周围侵犯</dt><dd class="{% if pni == 'positive' %}risk-value{% endif %}">{{ pni_display or '—' }}</dd></div><div><dt>切缘状态</dt><dd>{{ margin_display or '—' }}</dd></div><div><dt>DOI</dt><dd>{{ patient.record_data.get('doi_p_1_primsugr') or '—' }}</dd></div></dl></article></aside>
+  </div>
+  <details class="provenance-drawer"><summary>数据来源与可用性</summary><dl><div><dt>临床与病理基线</dt><dd>已纳入 V0.1 数据包</dd></div><div><dt>切片、标注与 AI 分析</dt><dd>当前门户未接入</dd></div><div><dt>患者 UUID</dt><dd><code>{{ patient.subject_id }}</code></dd></div><div><dt>记录版本</dt><dd>{{ patient.source_version }} · {{ patient.updated_at or '—' }}</dd></div></dl></details>
+</section>
+
+{% for section in sections %}
+  {% if section.title in ['患者与诊断', '生活方式与合并症', '临床分期'] %}{% set section_tab = 'clinical' %}{% elif section.title == '初始病理' %}{% set section_tab = 'pathology' %}{% elif section.title in ['初始手术', '辅助与挽救治疗'] %}{% set section_tab = 'treatment' %}{% elif section.title == '随访与结局' %}{% set section_tab = 'followup' %}{% else %}{% set section_tab = 'clinical' %}{% endif %}
+  <section class="tab-panel detail-section" data-panel="{{ section_tab }}"><header><h2>{{ section.title }}</h2><p>{% if section_tab == 'clinical' %}患者基本信息、诊断与临床分期。{% elif section_tab == 'pathology' %}组织学、切缘、淋巴结及侵袭相关病理字段。{% elif section.title == '初始手术' %}原发肿瘤手术、颈部清扫及围手术期记录。{% elif section_tab == 'treatment' %}辅助与挽救治疗记录。{% else %}随访、复发与结局记录。{% endif %}</p></header><dl class="field-grid">{% for field in section.fields %}<div class="field-item"><dt title="{{ field.name }}">{{ field.label }}<span class="technical-field">（{{ field.name }}）</span></dt><dd>{{ field.value }}</dd></div>{% endfor %}</dl></section>
+{% endfor %}
+<script>
+(() => { const tabs=[...document.querySelectorAll('.patient-tab')], panels=[...document.querySelectorAll('.tab-panel')]; const activate=(name)=>{if(!tabs.some((tab)=>tab.dataset.tab===name))name='overview';tabs.forEach((tab)=>tab.classList.toggle('active',tab.dataset.tab===name));panels.forEach((panel)=>panel.hidden=panel.dataset.panel!==name);history.replaceState(null,'','#'+name)};tabs.forEach((tab)=>tab.addEventListener('click',()=>activate(tab.dataset.tab)));activate(location.hash.slice(1)||'overview');const toggle=document.querySelector('#technical-fields-toggle');if(toggle)toggle.addEventListener('change',()=>document.body.classList.toggle('technical-fields-visible',toggle.checked));})();
+</script>
+</div>
+{% endblock %}

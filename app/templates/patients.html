@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}患者队列 · XJTU-OSCC{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">数据浏览</p><h1>患者队列 <span class="count">{{ total }} 例</span></h1><p>查看患者级临床和病理数据。记录按队列年份及诊断日期的时间顺序排列。</p></div>
+  {% if user.role in ['editor','admin'] %}<a class="button" href="/patients/new">新增患者</a>{% endif %}
+</header>
+{% if filter_error %}<p class="error" role="alert">筛选条件有误：{{ filter_error }} 请修正后重新检索。</p>{% endif %}
+<form class="filters" method="get" novalidate>
+  <label class="search-field"><span>检索</span><input name="q" placeholder="患者 UUID 或原发部位" value="{{ request.query_params.get('q','') }}"></label>
+  <label>年份<input type="number" name="cohort_year" value="{{ request.query_params.get('cohort_year','') }}"></label>
+  <label>性别<select name="sex"><option value="">全部</option>{% for x in options.sexes %}<option value="{{x}}" {% if request.query_params.get('sex')==x %}selected{% endif %}>{{x}}</option>{% endfor %}</select></label>
+  <label>原发部位<select name="primary_site"><option value="">全部</option>{% for x in options.sites %}<option value="{{x}}" {% if request.query_params.get('primary_site')==x %}selected{% endif %}>{{x}}</option>{% endfor %}</select></label>
+  <label>AJCC 分期<select name="ajcc_stage"><option value="">全部</option>{% for x in options.stages %}<option value="{{x}}" {% if request.query_params.get('ajcc_stage')==x %}selected{% endif %}>{{x}}</option>{% endfor %}</select></label>
+  <label>年龄（起）<input type="number" name="age_min" value="{{ request.query_params.get('age_min','') }}"></label>
+  <label>年龄（止）<input type="number" name="age_max" value="{{ request.query_params.get('age_max','') }}"></label>
+  <div class="filter-actions"><button>应用筛选</button><a href="/patients">清除条件</a></div>
+</form>
+<div class="table-caption"><span><strong>{{ total }}</strong> 例符合筛选条件</span><span>每页 25 条 · UUID 位于末列</span></div>
+<div class="table-wrap"><table><thead><tr><th>年份</th><th>诊断日期</th><th class="num">年龄</th><th>性别</th><th>原发部位</th><th>cT / cN</th><th>pT / pN</th><th>分期</th><th>生存状态</th><th>患者 ID</th></tr></thead><tbody>{% for p in records %}<tr onclick="window.location='/patients/{{ p.subject_id }}'" tabindex="0"><td>{{p.cohort_year or '—'}}</td><td>{{p.diagnosis_date or '—'}}</td><td class="num">{{p.age_at_diagnosis or '—'}}</td><td>{{p.sex or '—'}}</td><td>{{p.primary_site or '—'}}</td><td>{{p.record_data.get('ct') or '—' }} / {{ p.record_data.get('cn') or '—' }}</td><td>{{p.record_data.get('pt') or '—' }} / {{ p.record_data.get('pn') or '—' }}</td><td><span class="badge">{{p.ajcc_stage or '—'}}</span></td><td>{{p.survival_status or '—'}}</td><td><a class="uuid-link" href="/patients/{{p.subject_id}}" onclick="event.stopPropagation()">{{p.subject_id}}</a></td></tr>{% else %}<tr><td colspan="10" class="empty">没有符合当前筛选条件的患者记录。</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

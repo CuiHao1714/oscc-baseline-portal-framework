@@ -1,0 +1,33 @@
+# Controlled research data and operational state: never publish.
+*.db
+*.sqlite
+*.sqlite3
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.json
+!package.json
+!package-lock.json
+data/*
+!data/README.md
+backups/
+portal_backups/
+
+# Secrets and local configuration.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local build/runtime artifacts.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+graphify-out/
+project_memory/
+Ledger/
+.DS_Store

@@ -1,0 +1,1 @@
+.form-option-source,.form-option-notice{display:block;margin-top:6px;font-family:inherit;font-size:12px;line-height:1.45}.form-option-source{color:var(--text-secondary)}.form-option-notice{color:#9d5c13}.field:has(.form-option-notice) input{border-color:#ddc48d;background:#fffdf8}
